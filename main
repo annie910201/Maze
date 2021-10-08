@@ -1,0 +1,136 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Collections;
+
+namespace Maze
+{
+    class Program
+    {
+        static int buttom = 0, height = 0;
+        static void Main(string[] args)
+        {
+            Console.Write("請輸入迷宮大小(底,高):");
+            string input = Console.ReadLine();
+            string[] seg = input.Split(',');
+            buttom = int.Parse(seg[0]);
+            height = int.Parse(seg[1]);
+            string[,] maze = new string[height, buttom];//一開始讀取的陣列
+            string[,] output = new string[height, buttom];//最後印出的陣列
+            int[,]route =new int[height, buttom];//紀錄走過的每一步的陣列確保不重複
+            int[,] minRoute = new int[height, buttom];//記錄路徑最小的陣列
+            Console.WriteLine("請輸入迷宮地圖:");
+            /* Read a line of string and apply substring to devide them. */
+            int startX=0, startY=0;
+            for (int i = 0; i < height; i++)
+            {
+                string str = Console.ReadLine();
+                for (int j = 0; j < buttom; j++)
+                {
+                    minRoute[i, j] = 0;
+                    maze[i, j] = str.Substring(j, 1);
+                    output[i, j] = maze[i, j];
+                    if (maze[i, j ]== "1")route[i, j] = 2;//如果route=2是牆壁，=1是走過的路線
+                    else route[i, j] = 0; //0和X都算是可以走
+                    if (maze[i, j] == "0")
+                    {
+                        startX = j;
+                        startY = i;
+                    }
+                }
+            }  
+            if(FindRoute(ref route,ref  maze, startX, startY,ref minRoute))/* Use recursion to find the road. */
+            {
+                Console.WriteLine();
+                Console.WriteLine("Output:");
+                for (int i = 0; i < height; i++)
+                {
+                    for (int j = 0; j < buttom; j++)
+                    {
+                        if (minRoute[i, j] == 1&&(maze[i,j]!="0"&&maze[i,j]!="X")) output[i, j] = "*";
+                        
+                    }
+                }
+                for (int i = 0; i < height; i++)
+                {
+                    for (int j = 0; j < buttom; j++)
+                    {
+                        Console.Write(output[i, j]);
+                    }
+                    Console.WriteLine();
+                }
+                Console.WriteLine("最短路徑長:{0}",min);
+            }
+            else
+            {
+                Console.WriteLine();
+                Console.WriteLine("Output:");
+                for(int i = 0; i < height; i++)
+                {
+                    for(int j = 0; j < buttom; j++)
+                    {
+                        Console.Write(output[i, j]);
+                    }
+                    Console.WriteLine();
+                }
+                Console.WriteLine("沒有路徑");
+            }
+            Console.ReadKey();
+        }
+        static int min = 1000;
+         
+        private static bool FindRoute(ref int[,] route,ref string[,] maze,int x,int y,ref int[,]minRoute)
+        {
+            int len = 0;
+            route[y, x] = 1;
+            
+            if (maze[y, x] == "X") /* When we reach the end,starting to find the road we go */
+            {
+                for(int i = 0; i < height; i++)
+                {
+                    for(int j = 0; j < buttom; j++)
+                    {
+                        if(route[i,j]==1) len += route[i, j]; //記得不要加牆壁
+                    }
+                }
+                if (len - 2 < min)
+                {
+                    min = len - 2;
+                    for (int i = 0; i < height; i++)
+                    {
+                        for (int j = 0; j < buttom; j++)
+                        {
+                            minRoute[i, j] = 0;
+                            if (route[i, j] == 1 ) minRoute[i, j] = 1;//注意minRoute跟route的差別!!!
+                            //route->尚未走過區域=0，已走過區域=1，牆壁=2
+                            //minRoute->未走過區域=0，已走過區域=1(牆壁不用管，route已審核過)
+                        }
+                    }
+                }
+                /* After calculation,we need to initialize some variables in order the next calculation. */
+                len = 0;
+                for(int i = 0; i < height; i++)
+                {
+                    for (int j = 0; j < buttom; j++)
+                    {
+                        if (maze[i, j] == "1") route[i, j] = 2;
+                        else route[i, j] = 0;
+                    }
+                    
+                }
+                return true;
+            }
+            if (x + 1 < buttom && route[ y,x+1] == 0 && (maze[y, x + 1] == " "||maze[y,x+1]=="X") && FindRoute(ref route,ref maze, x + 1, y,ref minRoute))return true;
+            if (x - 1 >=0 && route[y, x - 1] == 0 && (maze[y, x - 1] == " " || maze[y, x - 1] == "X") && FindRoute(ref route, ref maze, x - 1, y, ref minRoute)) return true;
+            if (y + 1 < height && route[y+1,x] ==0&& (maze[y+1, x] == " "||maze[y+1,x]=="X") && FindRoute(ref route,ref maze, x, y + 1,ref  minRoute))return true;
+            if (y - 1 >= 0 && route[y - 1, x] == 0 && (maze[y - 1, x] == " " || maze[y - 1, x] == "X") && FindRoute(ref route, ref maze, x, y - 1, ref minRoute)) return true;
+            else
+            {
+                route[y, x] = 0;  /*Delete the 1 we go from. */
+                return false;
+            }
+        } 
+    }
+}
